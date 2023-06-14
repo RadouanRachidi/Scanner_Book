@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, Button } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
+import data from './data';
 
 export default function App() {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
-  const [text, setText] = useState('Not yet scanned')
+  const [text, setText] = useState('Not yet scanned');
+  const [selectedBox, setSelectedBox] = useState(null);
+  const [selectedBook, setSelectedBook] = useState(null);
 
   const askForCameraPermission = () => {
     (async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === 'granted');
-    })()
-  }
+    })();
+  };
 
   // Request Camera Permission
   useEffect(() => {
@@ -20,38 +23,67 @@ export default function App() {
   }, []);
 
   // What happens when we scan the bar code
-  const handleBarCodeScanned = ({ type, data }) => {
+  const handleBarCodeScanned = ({ type, data: scannedData }) => {
     setScanned(true);
-    setText(data)
-    console.log('Type: ' + type + '\nData: ' + data)
+    setText(scannedData);
+  
+    // Find the box based on the scanned data (ID)
+    const selectedBox = data.boxes.find((box) => box.books.includes(parseInt(scannedData)));
+  
+    if (selectedBox) {
+      setSelectedBox(selectedBox);
+  
+      // Find the book based on the box's book ID
+      const selectedBook = data.books.find((book) => book.id === parseInt(scannedData));
+  
+      if (selectedBook) {
+        setSelectedBook(selectedBook);
+      }
+    }
+  
+    console.log('Type: ' + type + '\nData: ' + scannedData);
   };
 
   // Check permissions and return the screens
   if (hasPermission === null) {
     return (
       <View style={styles.container}>
-        <Text>Requesting for camera permission</Text>
-      </View>)
+        <Text>Requesting camera permission</Text>
+      </View>
+    );
   }
   if (hasPermission === false) {
     return (
       <View style={styles.container}>
         <Text style={{ margin: 10 }}>No access to camera</Text>
         <Button title={'Allow Camera'} onPress={() => askForCameraPermission()} />
-      </View>)
+      </View>
+    );
   }
 
-  // Return the View
+  if (selectedBox && selectedBook) {
+    return (
+      <View style={styles.container}>
+        <Text>Box: {selectedBox.location}</Text>
+        <Text>Title: {selectedBook.title}</Text>
+        <Text>Author: {selectedBook.author}</Text>
+        <Button title={'Scan again?'} onPress={() => setScanned(false)} color="tomato" />
+      </View>
+    );
+  }
+
+  // Return the default scanner view
   return (
     <View style={styles.container}>
       <View style={styles.barcodebox}>
         <BarCodeScanner
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          style={{ height: 400, width: 400 }} />
+          style={{ height: 400, width: 400 }}
+        />
       </View>
       <Text style={styles.maintext}>{text}</Text>
 
-      {scanned && <Button title={'Scan again?'} onPress={() => setScanned(false)} color='tomato' />}
+      {scanned && <Button title={'Scan again?'} onPress={() => setScanned(false)} color="tomato" />}
     </View>
   );
 }
@@ -74,119 +106,6 @@ const styles = StyleSheet.create({
     width: 300,
     overflow: 'hidden',
     borderRadius: 30,
-    backgroundColor: 'tomato'
-  }
-});
-
-// Importer les dépendances
-const express = require('express');
-const mongoose = require('mongoose');
-
-// Créer une instance de l'application Express
-const app = express();
-
-// Configuration de la connexion à la base de données MongoDB
-mongoose.connect('mongodb://localhost:27017/library', { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-
-// Définition du modèle de données pour une boîte à livres
-const boxSchema = new mongoose.Schema({
-  location: {
-    type: {
-      type: String,
-      enum: ['Point'],
-      required: true
-    },
-    coordinates: {
-      type: [Number],
-      required: true
-    }
+    backgroundColor: 'tomato',
   },
-  books: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Book'
-  }]
-});
-
-const Box = mongoose.model('Box', boxSchema);
-
-// Définition du modèle de données pour un livre
-const bookSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true
-  },
-  author: {
-    type: String,
-    required: true
-  }
-});
-
-const Book = mongoose.model('Book', bookSchema);
-
-// Middleware pour parser les données JSON
-app.use(express.json());
-
-// Endpoint pour créer une nouvelle boîte à livres
-app.post('/boxes', async (req, res) => {
-  try {
-    const { location, books } = req.body;
-
-    const box = new Box({
-      location,
-      books
-    });
-
-    await box.save();
-
-    res.status(201).json(box);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create a new box' });
-  }
-});
-
-// Endpoint pour récupérer toutes les boîtes à livres
-app.get('/boxes', async (req, res) => {
-  try {
-    const boxes = await Box.find().populate('books');
-
-    res.json(boxes);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch boxes' });
-  }
-});
-
-// Endpoint pour créer un nouveau livre
-app.post('/books', async (req, res) => {
-  try {
-    const { title, author } = req.body;
-
-    const book = new Book({
-      title,
-      author
-    });
-
-    await book.save();
-
-    res.status(201).json(book);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create a new book' });
-  }
-});
-
-// Endpoint pour récupérer tous les livres
-app.get('/books', async (req, res) => {
-  try {
-    const books = await Book.find();
-
-    res.json(books);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch books' });
-  }
-});
-
-// Démarrer le serveur
-app.listen(3000, () => {
-  console.log('Server started on port 3000');
 });
