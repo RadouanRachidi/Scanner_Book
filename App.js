@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Button, Dimensions } from 'react-native';
+import { Text, View, StyleSheet, Button, Dimensions, Image } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import MapView, { Marker } from 'react-native-maps';
 import data from './data';
@@ -84,13 +84,19 @@ export default function App() {
                 <Text style={styles.instruction}>Liste des livres :</Text>
                 {selectedBox.books.map((book) => (
                     <View key={book.id} style={styles.bookContainer}>
-                        <Text style={styles.bookId}>ID: {book.id}</Text>
-                        <Text style={styles.bookTitle}>{book.title}</Text>
+                        <Text style={styles.bookId}>ID : {book.id}</Text>
+                        <View>
+                            <Text style={styles.bookTitle}>Titre : {book.title}</Text>
+                            <Text style={styles.bookAuthor}>Auteur : {book.author}</Text>
+                            <Image source={book.image} style={styles.bookImage} />
+                            <Text style={styles.bookSynopsis}>Synopsis : {book.synopsis}</Text>
+                        </View>
                     </View>
                 ))}
             </View>
         );
     };
+
 
     if (hasPermission === null) {
         return (

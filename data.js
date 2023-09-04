@@ -10,7 +10,8 @@ const data = {
                     id: 1,
                     title: 'Investir en Bourse',
                     author: 'John C. Bogle',
-                    synopsis: 'John C. Bogle, fondateur de Vanguard Group, offre des conseils sur l\'investissement en actions et les fonds indiciels pour une croissance financière à long terme.'
+                    synopsis: 'John C. Bogle, fondateur de Vanguard Group, offre des conseils sur l\'investissement en actions et les fonds indiciels pour une croissance financière à long terme.',
+                    image: require('./img/id1.jpg'),
                 },
                 {
                     id: 2,
