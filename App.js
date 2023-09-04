@@ -32,7 +32,7 @@ export default function App() {
   }, [loggedIn]);
 
   const handleBarCodeScanned = ({ data: scannedData }) => {
-    if (!loggedIn && scannedData === '1234567891012345') {
+    if (!loggedIn && scannedData === '1234567891012345') {   
       setLoggedIn(true);
       setUser({ firstName: 'Tom', lastName: 'Gérard' });
       setScanned(false);
