@@ -1,12 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Button, Dimensions, Image } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { Text, View, StyleSheet, Button, Dimensions, Image, TouchableOpacity } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import MapView, { Marker } from 'react-native-maps';
 import data from './data';
 
+const Stack = createStackNavigator();
+
 const LOGIN_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 
-export default function App() {
+function HomeScreen({ navigation }) {
+    return (
+        <View style={styles.container}>
+            <Text style={styles.welcomeText}>Bienvenue sur SpotiBook</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Scanner')}>
+                <View style={styles.loginButton}>
+                    <Text style={styles.loginButtonText}>Se connecter</Text>
+                </View>
+            </TouchableOpacity>
+        </View>
+    );
+}
+
+function ScannerScreen() {
     const [hasPermission, setHasPermission] = useState(null);
     const [scanned, setScanned] = useState(false);
     const [text, setText] = useState('Non encore scanné');
@@ -97,7 +114,6 @@ export default function App() {
         );
     };
 
-
     if (hasPermission === null) {
         return (
             <View style={styles.container}>
@@ -163,20 +179,10 @@ export default function App() {
                 <Text style={styles.instruction}>Boîte : {selectedBox.location}</Text>
                 {renderBooks()}
                 <Text style={styles.instruction}>Sélectionnez un livre en scannant son code QR</Text>
-                <BarCodeScanner
-                    onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-                    style={styles.scanner}
+                <Button
+                    title={'Emprunter un livre'}
+                    onPress={() => navigation.navigate('Scanner')}
                 />
-                {scanned && (
-                    <Button
-                        title={'Scanner à nouveau ?'}
-                        onPress={() => {
-                            setScanned(false);
-                            setText('Non encore scanné');
-                        }}
-                        color="tomato"
-                    />
-                )}
                 <Text style={styles.text}>{text}</Text>
             </View>
         );
@@ -213,6 +219,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    welcomeText: {
+        fontSize: 24,
+        marginBottom: 20,
+    },
+    loginButton: {
+        backgroundColor: 'green',
+        padding: 10,
+        borderRadius: 5,
+    },
+    loginButtonText: {
+        color: 'white',
+        fontSize: 18,
+    },
     instruction: {
         fontSize: 20,
         marginBottom: 10,
@@ -235,16 +254,27 @@ const styles = StyleSheet.create({
     bookContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 10, 
+        marginBottom: 10,
     },
     bookId: {
         fontSize: 16,
         color: 'gray',
         marginRight: 10,
-        width: 40, 
+        width: 40,
     },
     bookTitle: {
         fontSize: 16,
-        marginLeft: 10, 
+        marginLeft: 10,
     },
 });
+
+export default function App() {
+    return (
+        <NavigationContainer>
+            <Stack.Navigator initialRouteName="Home">
+                <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Scanner" component={ScannerScreen} />
+            </Stack.Navigator>
+        </NavigationContainer>
+    );
+}
